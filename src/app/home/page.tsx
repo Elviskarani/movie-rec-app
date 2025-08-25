@@ -6,14 +6,12 @@ import { useRouter } from 'next/navigation';
 import { Movie, Genre, UserPreferences } from '@/lib/types';
 import { getStorageItem } from '@/lib/storage';
 import { 
-  getMovieRecommendations, 
   searchMovies, 
   getPopularMovies, 
   getGenres 
 } from '@/lib/tmdb';
 import MovieGrid from '@/components/MovieGrid';
 import SearchBar from '@/components/SearchBar';
-import FilterPanel, { FilterState } from '@/components/FilterPanel';
 
 export default function HomePage() {
   const { user, logout } = useAuth();
@@ -26,7 +24,7 @@ export default function HomePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
-  const [showRecommendationBanner, setShowRecommendationBanner] = useState(false);
+  const [showGenreBanner, setShowGenreBanner] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -49,16 +47,19 @@ export default function HomePage() {
       const savedPreferences = getStorageItem<UserPreferences>('userPreferences');
       setUserPreferences(savedPreferences);
       
-      if (savedPreferences) {
-        // Load recommendations based on preferences
-        const recommendations = await getMovieRecommendations(savedPreferences);
-        setMovies(recommendations);
-        setShowRecommendationBanner(true);
+      if (savedPreferences && savedPreferences.genre && savedPreferences.genre !== 'any') {
+        // Load movies filtered by genre only
+        const genreMovies = await getMoviesByGenre(savedPreferences.genre, 1);
+        setMovies(genreMovies.results);
+        setTotalPages(genreMovies.total_pages);
+        setShowGenreBanner(true);
+        setCurrentPage(1);
       } else {
         // Load popular movies as default
         const popularData = await getPopularMovies(1);
         setMovies(popularData.results);
         setTotalPages(popularData.total_pages);
+        setCurrentPage(1);
       }
     } catch (error) {
       console.error('Error loading initial data:', error);
@@ -67,12 +68,62 @@ export default function HomePage() {
     }
   };
 
+  // New function to get movies by genre only
+  const getMoviesByGenre = async (genre: string, page: number = 1): Promise<{ results: Movie[], total_pages: number }> => {
+    try {
+      const genreMap: Record<string, number> = {
+        action: 28,
+        adventure: 12,
+        animation: 16,
+        comedy: 35,
+        crime: 80,
+        documentary: 99,
+        drama: 18,
+        family: 10751,
+        fantasy: 14,
+        history: 36,
+        horror: 27,
+        music: 10402,
+        mystery: 9648,
+        romance: 10749,
+        'science fiction': 878,
+        'tv movie': 10770,
+        thriller: 53,
+        war: 10752,
+        western: 37
+      };
+
+      const genreId = genreMap[genre.toLowerCase()];
+      if (!genreId) {
+        // If genre not found, return popular movies
+        return await getPopularMovies(page);
+      }
+
+      // Use the discover endpoint to get movies by genre
+      const response = await fetch(`${process.env.NEXT_PUBLIC_TMDB_BASE_URL}/discover/movie?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}&vote_count.gte=50`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch genre movies');
+      }
+      
+      const data = await response.json();
+      return {
+        results: data.results || [],
+        total_pages: data.total_pages || 0
+      };
+    } catch (error) {
+      console.error('Error fetching movies by genre:', error);
+      // Fallback to popular movies
+      return await getPopularMovies(page);
+    }
+  };
+
   const handleSearch = async (query: string) => {
     try {
       setLoading(true);
       setSearchQuery(query);
       setCurrentPage(1);
-      setShowRecommendationBanner(false);
+      setShowGenreBanner(false);
       
       const searchData = await searchMovies(query, 1);
       setMovies(searchData.results);
@@ -84,28 +135,13 @@ export default function HomePage() {
     }
   };
 
-  const handleFilterChange = async (filters: FilterState) => {
-    try {
-      setLoading(true);
-      setShowRecommendationBanner(false);
-      // Implement filtering logic here
-      // For now, just reload popular movies
-      const popularData = await getPopularMovies(1);
-      setMovies(popularData.results);
-      setTotalPages(popularData.total_pages);
-    } catch (error) {
-      console.error('Error applying filters:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const clearSearch = async () => {
     setSearchQuery('');
+    setCurrentPage(1);
     await loadInitialData();
   };
 
-  const loadMoreMovies = async () => {
+  const goToNextPage = async () => {
     if (currentPage >= totalPages || loading) return;
 
     try {
@@ -115,14 +151,49 @@ export default function HomePage() {
       let newData;
       if (searchQuery) {
         newData = await searchMovies(searchQuery, nextPage);
+      } else if (userPreferences && userPreferences.genre && userPreferences.genre !== 'any') {
+        // Load next page of genre-filtered movies
+        newData = await getMoviesByGenre(userPreferences.genre, nextPage);
       } else {
         newData = await getPopularMovies(nextPage);
       }
       
-      setMovies(prev => [...prev, ...newData.results]);
+      setMovies(newData.results); // Replace movies instead of appending
       setCurrentPage(nextPage);
+      
+      // Scroll to top when new page loads
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
-      console.error('Error loading more movies:', error);
+      console.error('Error loading next page:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const goToPreviousPage = async () => {
+    if (currentPage <= 1 || loading) return;
+
+    try {
+      setLoading(true);
+      const prevPage = currentPage - 1;
+      
+      let newData;
+      if (searchQuery) {
+        newData = await searchMovies(searchQuery, prevPage);
+      } else if (userPreferences && userPreferences.genre && userPreferences.genre !== 'any') {
+        // Load previous page of genre-filtered movies
+        newData = await getMoviesByGenre(userPreferences.genre, prevPage);
+      } else {
+        newData = await getPopularMovies(prevPage);
+      }
+      
+      setMovies(newData.results); // Replace movies instead of appending
+      setCurrentPage(prevPage);
+      
+      // Scroll to top when new page loads
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Error loading previous page:', error);
     } finally {
       setLoading(false);
     }
@@ -197,9 +268,6 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Current View Banner */}
-   
-
       <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
         {/* Search Bar */}
         <div className="mb-6">
@@ -219,25 +287,26 @@ export default function HomePage() {
           )}
         </div>
 
-      
-
-        {showRecommendationBanner && !searchQuery && (
-        <div className="bg-gray-900 text-white">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold text-3xl">Showing movies based on your preferences</span>
+        {/* Genre Banner */}
+        {showGenreBanner && !searchQuery && userPreferences && (
+          <div className="bg-gray-900 text-white">
+            <div className="max-w-7xl mx-auto px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="font-semibold text-3xl">
+                    Showing {userPreferences.genre} movies
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowGenreBanner(false)}
+                  className="text-green-100 hover:text-white"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                onClick={() => setShowRecommendationBanner(false)}
-                className="text-green-100 hover:text-white"
-              >
-                ✕
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* Movies Grid - Now fills the remaining space */}
         <div className="flex-1">
@@ -269,14 +338,37 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Load More Button */}
-          {!loading && currentPage < totalPages && (
-            <div className="mt-8 text-center">
+          {/* Pagination Controls */}
+          {!loading && totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center space-x-4">
               <button
-                onClick={loadMoreMovies}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                onClick={goToPreviousPage}
+                disabled={currentPage <= 1}
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  currentPage <= 1
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                Load More Movies
+                Previous
+              </button>
+              
+              <div className="flex items-center space-x-2">
+                <span className="text-white">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+              
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage >= totalPages}
+                className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  currentPage >= totalPages
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                Next
               </button>
             </div>
           )}

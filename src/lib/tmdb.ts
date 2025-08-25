@@ -5,7 +5,6 @@ const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const BASE_URL = process.env.NEXT_PUBLIC_TMDB_BASE_URL;
 
 if (!TMDB_API_KEY) {
-  // Warn once during startup if API key is missing
   console.warn('[TMDB] Missing NEXT_PUBLIC_TMDB_API_KEY. Requests will fail.');
 }
 if (!BASE_URL) {

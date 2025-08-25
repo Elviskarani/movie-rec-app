@@ -9,7 +9,14 @@ interface MovieCardProps {
 export default function MovieCard({ movie }: MovieCardProps) {
   const imageUrl = movie.poster_path 
     ? `${process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL}${movie.poster_path}`
-    : '/placeholder-movie.jpg';
+    : '/placeholder.webp';
+
+  // Safe date handling
+  const getYear = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? 'N/A' : date.getFullYear().toString();
+  };
 
   return (
     <Link href={`/movie/${movie.id}`} className="block group">
@@ -38,7 +45,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
             <span className="text-white text-xs font-medium">
-              {movie.vote_average.toFixed(1)}
+              {movie.vote_average?.toFixed(1) || '0.0'}
             </span>
           </div>
         </div>
@@ -51,7 +58,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
           
           <div className="flex items-center justify-between">
             <p className="text-zinc-400 text-sm font-medium">
-              {new Date(movie.release_date).getFullYear()}
+              {getYear(movie.release_date)}
             </p>
             
             {/* Interactive rating */}
@@ -60,7 +67,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
                 {[...Array(5)].map((_, i) => (
                   <svg 
                     key={i}
-                    className={`w-3 h-3 ${i < Math.round(movie.vote_average / 2) ? 'text-yellow-400' : 'text-zinc-600'}`}
+                    className={`w-3 h-3 ${i < Math.round((movie.vote_average || 0) / 2) ? 'text-yellow-400' : 'text-zinc-600'}`}
                     fill="currentColor" 
                     viewBox="0 0 24 24"
                   >
