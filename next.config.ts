@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
       },
     ],
     // Set to true in dev to avoid optimizer fetch timeouts (use .env.local: NEXT_IMAGE_UNOPTIMIZED=true)
-    unoptimized: process.env.NEXT_IMAGE_UNOPTIMIZED === "true",
-  },
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",  },
 };
 
 export default nextConfig;

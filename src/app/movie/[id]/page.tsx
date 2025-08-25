@@ -4,13 +4,14 @@ import Link from 'next/link';
 import { getMovieDetails } from '@/lib/tmdb';
 
 interface MoviePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function MoviePage({ params }: MoviePageProps) {
-  const movieId = parseInt(params.id);
+  const { id } = await params;
+  const movieId = parseInt(id);
   
   if (isNaN(movieId)) {
     notFound();
@@ -77,7 +78,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
 
               <div className="flex items-center space-x-6 mb-6">
                 <div className="flex items-center">
-                  <span className="text-yellow-400 text-xl">★</span>
+                  <span className="text-yellow-400 text-xl">⭐</span>
                   <span className="text-white ml-2 text-lg">
                     {movie.vote_average.toFixed(1)}
                   </span>
