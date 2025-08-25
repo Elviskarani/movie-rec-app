@@ -10,7 +10,7 @@ export default function MovieGrid({ movies, loading }: MovieGridProps) {
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-        {Array.from({ length: 20 }).map((_, index) => (
+        {Array.from({ length: 21 }).map((_, index) => (
           <div key={index} className="bg-gray-800 rounded-lg animate-pulse">
             <div className="aspect-[2/3] bg-gray-700 rounded-t-lg"></div>
             <div className="p-4 space-y-2">

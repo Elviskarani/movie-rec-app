@@ -294,7 +294,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <span className="font-semibold text-3xl">
-                    Showing {userPreferences.genre} movies
+                    Showing movies you might like
                   </span>
                 </div>
                 <button
@@ -347,7 +347,7 @@ export default function HomePage() {
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                   currentPage <= 1
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-gray-600 hover:bg-green-700 text-white'
                 }`}
               >
                 Previous
@@ -365,7 +365,7 @@ export default function HomePage() {
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                   currentPage >= totalPages
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
                 }`}
               >
                 Next
