@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { getStorageItem } from '@/lib/storage';
+import { getClientStorageItem } from '@/lib/storage';
 import { UserPreferences } from '@/lib/types';
 
 export default function LoginPage() {
@@ -21,18 +21,15 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Perform login
       const success = await login(email, password);
       
       if (success) {
-        // Check if user has preferences
-        const userPreferences = getStorageItem<UserPreferences>('userPreferences');
+        // Check if user has preferences (using client-side storage function)
+        const userPreferences = getClientStorageItem<UserPreferences>('userPreferences');
         
         if (userPreferences) {
-          // User has preferences, go to home
           router.push('/home');
         } else {
-          // First time user, go to preferences
           router.push('/preferences');
         }
       } else {
@@ -50,8 +47,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-r from-gray-700 via-gray-900 to-black flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+            Welcome Back
+          </h2>
           <p className="mt-2 text-center text-xl text-gray-400">
-            Sign in  Discover your next watch
+            Sign in to discover your next watch
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -100,7 +100,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border-black text-sm font-medium rounded-md text-white bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <span className="flex items-center">
@@ -119,7 +119,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => router.push('/signup')}
-                className="font-medium text-green-400 hover:text-blue-300"
+                className="font-medium text-green-400 hover:text-blue-300 transition-colors"
               >
                 Sign up here
               </button>

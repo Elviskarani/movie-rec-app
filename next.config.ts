@@ -9,9 +9,11 @@ const nextConfig: NextConfig = {
         pathname: "/t/p/**",
       },
     ],
-    // Set to true in dev to avoid optimizer fetch timeouts (use .env.local: NEXT_IMAGE_UNOPTIMIZED=true)
+    // Disable optimizer in development to avoid fetch timeouts to TMDB
+    unoptimized: process.env.NODE_ENV === 'development',
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",  },
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
 };
 
 export default nextConfig;

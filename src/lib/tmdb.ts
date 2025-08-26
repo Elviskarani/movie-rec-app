@@ -250,3 +250,5 @@ export const getSimilarMovies = async (movieId: number): Promise<Movie[]> => {
     return [];
   }
 };
+
+export default tmdbApi;

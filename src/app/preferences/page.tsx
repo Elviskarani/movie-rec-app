@@ -31,11 +31,13 @@ export default function PreferencesPage() {
       return;
     }
 
-    // Load existing preferences if they exist
-    const savedPreferences = getStorageItem<UserPreferences>('userPreferences');
-    if (savedPreferences) {
-      setPreferences(savedPreferences);
-    }
+    (async () => {
+      // Load existing preferences if they exist
+      const savedPreferences = await getStorageItem<UserPreferences>('userPreferences');
+      if (savedPreferences) {
+        setPreferences(savedPreferences);
+      }
+    })();
   }, [user, router]);
 
   const handleSubmit = async () => {

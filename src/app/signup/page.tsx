@@ -21,7 +21,7 @@ export default function SignupPage() {
     }
   }, [user, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -32,15 +32,20 @@ export default function SignupPage() {
       return;
     }
 
-    const result = signup(name, email, password);
-    
-    if (result.success) {
-      router.push('/preferences');
-    } else {
-      setError(result.error || 'Signup failed');
+    try {
+      const result = await signup(name, email, password);
+      
+      if (result.success) {
+        router.push('/preferences');
+      } else {
+        setError(result.error || 'Signup failed');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -132,7 +137,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <span className="flex items-center">
@@ -151,7 +156,7 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => router.push('/login')}
-                className="font-medium text-green-400 hover:text-blue-300"
+                className="font-medium text-green-400 hover:text-blue-300 transition-colors"
               >
                 Sign in here
               </button>

@@ -5,7 +5,7 @@ import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { Movie, UserPreferences } from '@/lib/types';
 import { getStorageItem } from '@/lib/storage';
-import { getMovieRecommendations } from '@/lib/tmdb';
+import { getMovieRecommendations } from '@/lib/tmdb-cached';
 import Image from 'next/image';
 
 const TMDB_IMG_BASE = process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p/w500';
@@ -29,15 +29,17 @@ export default function RecommendationsPage() {
       return;
     }
 
-    // Get user preferences from localStorage
-    const savedPreferences = getStorageItem<UserPreferences>('userPreferences');
-    if (!savedPreferences) {
-      router.push('/preferences');
-      return;
-    }
+    (async () => {
+      // Get user preferences from localStorage
+      const savedPreferences = await getStorageItem<UserPreferences>('userPreferences');
+      if (!savedPreferences) {
+        router.push('/preferences');
+        return;
+      }
 
-    setPreferences(savedPreferences);
-    loadInitialRecommendations(savedPreferences);
+      setPreferences(savedPreferences);
+      await loadInitialRecommendations(savedPreferences);
+    })();
   }, [user, router]);
 
   const loadInitialRecommendations = async (userPreferences: UserPreferences) => {
@@ -203,7 +205,7 @@ export default function RecommendationsPage() {
                 <button
                   onClick={getNextRecommendation}
                   disabled={gettingNext}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="flex-1 bg-gradient-to-r from-teal-800 to-green-300 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {gettingNext ? (
                     <span className="flex items-center justify-center">

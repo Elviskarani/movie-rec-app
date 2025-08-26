@@ -9,7 +9,7 @@ import {
   searchMovies, 
   getPopularMovies, 
   getGenres 
-} from '@/lib/tmdb';
+} from '@/lib/tmdb-cached';
 import MovieGrid from '@/components/MovieGrid';
 import SearchBar from '@/components/SearchBar';
 
@@ -44,7 +44,7 @@ export default function HomePage() {
       setGenres(genresData);
       
       // Check if user has preferences
-      const savedPreferences = getStorageItem<UserPreferences>('userPreferences');
+      const savedPreferences = await getStorageItem<UserPreferences>('userPreferences');
       setUserPreferences(savedPreferences);
       
       if (savedPreferences && savedPreferences.genre && savedPreferences.genre !== 'any') {
@@ -347,7 +347,7 @@ export default function HomePage() {
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                   currentPage <= 1
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-600 hover:bg-green-700 text-white'
+                    : 'bg-gradient-to-r from-teal-800 to-green-300 hover:bg-green-700 text-white'
                 }`}
               >
                 Previous
@@ -364,8 +364,8 @@ export default function HomePage() {
                 disabled={currentPage >= totalPages}
                 className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
                   currentPage >= totalPages
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
+                    ? 'bg-gradient-to-r from-teal-800 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-700 hover:bg-green-700 text-white'
                 }`}
               >
                 Next
